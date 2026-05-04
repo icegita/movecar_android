@@ -667,13 +667,18 @@ function renderMainPage(origin) {
 
         const elapsed = Date.now() - session.sentAt;
         const TWENTY_MIN = 20 * 60 * 1000;
-        let shouldShow = false;
+        const ONE_HOUR   = 60 * 60 * 1000;
 
+        // 超过 1 小时，无论如何都不显示，清除记录
+        if (elapsed > ONE_HOUR) {
+          localStorage.removeItem('pendingSession');
+          return;
+        }
+
+        let shouldShow = false;
         if (userLocation && session.location) {
-          // 有位置：判断距离是否在 50 米内
           shouldShow = calcDistance(userLocation, session.location) <= 50;
         } else {
-          // 无位置：判断 20 分钟内
           shouldShow = elapsed <= TWENTY_MIN;
         }
 
