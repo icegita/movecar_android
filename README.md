@@ -1,4 +1,4 @@
-<img width="465" height="664" alt="Screenshot" src="https://github.com/user-attachments/assets/3db2e472-c240-4586-8336-333c87adace1" /># MoveCar_Android - 挪车通知系统（安卓优化版）
+# MoveCar_Android - 挪车通知系统（个人定制版）
 
 基于 Cloudflare Workers 的智能挪车通知系统，扫码即可通知车主，保护双方隐私。
 
@@ -24,8 +24,12 @@
 #### 增加通知进度入口
 
 原版一旦离开页面,再次扫描只能重新发起流程,增加了查看进度的入口,按需显示;
-![Screenshot_2](https://github.com/icegita/movecar_android/blob/main/232814.jpg)
-![Screenshot_2](https://github.com/icegita/movecar_android/blob/main/232833.jpg)
+<img width="465" height="664" alt="Screenshot" src="https://github.com/user-attachments/assets/3db2e472-c240-4586-8336-333c87adace1" />
+<img width="465" height="741" alt="232814" src="https://github.com/user-attachments/assets/0492d414-f079-4108-954d-9dff98cb894a" />
+<img width="465" height="800" alt="232833" src="https://github.com/user-attachments/assets/561b6e8b-2785-441e-85ac-fbf33a65ad46" />
+
+
+
 
 
 
