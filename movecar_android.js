@@ -297,11 +297,18 @@ function renderMainPage(origin) {
       .loc-status { font-size: clamp(12px, 3.2vw, 14px); color: #718096; margin-top: 3px; }
       .loc-status.success { color: #28a745; }
       .loc-status.error { color: #dc3545; }
-      .btn-main { background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%); color: white; border: none; padding: clamp(16px, 4vw, 22px); border-radius: clamp(16px, 4vw, 22px); font-size: clamp(16px, 4.2vw, 20px); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(0, 147, 233, 0.35); transition: all 0.2s; min-height: 56px; }
-      .btn-main:active { transform: scale(0.98); }
-      .btn-main:disabled { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); box-shadow: none; cursor: not-allowed; }
+      .btn-main { background: linear-gradient(135deg, #0093E9 0%, #80D0C7 100%); color: white; border: none; padding: clamp(16px, 4vw, 22px); border-radius: clamp(16px, 4vw, 22px); font-size: clamp(16px, 4.2vw, 20px); font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 10px 30px rgba(0, 147, 233, 0.35), 0 0 0 4px rgba(255, 255, 255, 0.4), 0 0 0 8px rgba(255, 255, 255, 0.15); transition: all 0.2s; min-height: 56px; animation: btn-pulse 2.4s ease-in-out infinite; margin: 0 8px; }
+      .btn-main:active { transform: scale(0.98); animation: none; }
+      .btn-main:disabled { background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); box-shadow: none; cursor: not-allowed; animation: none; }
+      @keyframes btn-pulse { 0%, 100% { box-shadow: 0 10px 30px rgba(0,147,233,0.35), 0 0 0 4px rgba(255,255,255,0.4), 0 0 0 8px rgba(255,255,255,0.15); } 50% { box-shadow: 0 10px 30px rgba(0,147,233,0.45), 0 0 0 6px rgba(255,255,255,0.5), 0 0 0 12px rgba(255,255,255,0.12); } }
       .toast { position: fixed; top: calc(20px + var(--sat)); left: 50%; transform: translateX(-50%) translateY(-100px); background: white; padding: clamp(12px, 3vw, 16px) clamp(20px, 5vw, 32px); border-radius: 16px; font-size: clamp(14px, 3.5vw, 16px); font-weight: 600; color: #2d3748; box-shadow: 0 10px 40px rgba(0,0,0,0.15); opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 100; max-width: calc(100vw - 40px); }
       .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+      .pending-banner { background: rgba(255,255,255,0.95); border-radius: clamp(16px, 4vw, 20px); padding: clamp(14px, 3.5vw, 18px) clamp(16px, 4vw, 22px); display: none; align-items: center; gap: 12px; box-shadow: 0 8px 24px rgba(0,147,233,0.18); border: 1.5px solid rgba(0,147,233,0.25); cursor: pointer; transition: transform 0.15s; -webkit-tap-highlight-color: transparent; margin: 0 8px; }
+      .pending-banner:active { transform: scale(0.98); }
+      .pending-banner.show { display: flex; }
+      .pending-banner-icon { font-size: clamp(22px, 5.5vw, 28px); flex-shrink: 0; }
+      .pending-banner-text { flex: 1; font-size: clamp(14px, 3.5vw, 16px); font-weight: 600; color: #2d3748; }
+      .pending-banner-arrow { font-size: clamp(14px, 3.5vw, 16px); color: #0093E9; font-weight: 700; flex-shrink: 0; }
       #successView { display: none; }
       .success-card { text-align: center; background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%); border: 2px solid #28a745; }
       .success-icon { font-size: clamp(56px, 14vw, 80px); margin-bottom: clamp(12px, 3vw, 20px); display: block; }
@@ -354,7 +361,8 @@ function renderMainPage(origin) {
         <div class="modal-title">位置信息说明</div>
         <div class="modal-desc">分享位置可让车主确认您在车旁<br>不分享将延迟5分钟发送通知</div>
         <div class="modal-buttons">
-          <button class="modal-btn modal-btn-primary" onclick="hideModal('locationTipModal');requestLocation()">我知道了</button>
+          <button class="modal-btn modal-btn-secondary" onclick="hideModal('locationTipModal');denyLocation()">不分享</button>
+          <button class="modal-btn modal-btn-primary" onclick="hideModal('locationTipModal');requestLocation()">分享</button>
         </div>
       </div>
     </div>
@@ -366,15 +374,20 @@ function renderMainPage(origin) {
         <p>Notify Car Owner</p>
       </div>
 
+      <div id="pendingBanner" class="pending-banner" onclick="showPendingSession()">
+        <span class="pending-banner-icon">🔔</span>
+        <span class="pending-banner-text">您有一条进行中的通知</span>
+        <span class="pending-banner-arrow">查看 →</span>
+      </div>
+
       <div class="card input-card">
-        <!-- contenteditable 输入框：支持富文本（加急红色文字）-->
+        <!-- contenteditable 输入框 -->
         <div id="msgInput" class="msg-input" contenteditable="true" data-placeholder="输入留言给车主...（或点击下方按钮）"></div>
 
         <div class="tags">
-          <!-- [修改] 恢复 id 属性，供 updateTagActive() 控制高亮；挡路/临停互斥 -->
-          <div id="tag-block" class="tag" onclick="selectBase('您的车挡住我了')">🚧 挡路</div>
-          <div id="tag-temp"  class="tag" onclick="selectBase('临时停靠一下')">⏱️ 临停</div>
-          <div id="tag-urgent" class="tag" onclick="toggleUrgent()">🙏 加急</div>
+          <!-- [修改] 恢复 id 属性，供 updateTagActive() 控制高亮；挡路/违停互斥 -->
+          <div id="tag-block" class="tag" onclick="selectBase('您的车挡住我了,请尽快挪开!')">🚧 挪车通知</div>
+          <div id="tag-temp"  class="tag" onclick="selectBase('此地不准停车,请尽快挪开!')">⏱️ 违停提醒</div>
         </div>
       </div>
 
@@ -451,11 +464,13 @@ function renderMainPage(origin) {
               icon.className = 'loc-icon success';
               txt.className  = 'loc-status success';
               txt.innerText  = '已获取位置 ✓';
+              checkPendingSession();
             },
             () => {
               icon.className = 'loc-icon error';
               txt.className  = 'loc-status error';
               txt.innerText  = '位置获取失败，刷新页面重试或复制链接到浏览器打开';
+              checkPendingSession();
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
           );
@@ -463,18 +478,14 @@ function renderMainPage(origin) {
           icon.className = 'loc-icon error';
           txt.className  = 'loc-status error';
           txt.innerText  = '浏览器不支持定位';
+          checkPendingSession();
         }
       }
 
       // ── 标签状态管理 ────────────────────────────────────────────────────────
-      // [修改] 以下为重写的标签逻辑，解决四个问题：
-      //   1. 挡路 / 临停 互斥（切换时自动移除另一个）
-      //   2. 再次点击同一标签可取消
-      //   3. 加急防重复插入（再次点击为取消）
-      //   4. 恢复标签选中高亮反馈
+      // 挡路 / 临停 互斥（切换时自动移除另一个），再次点击同一标签可取消
 
       let selectedBaseText = ''; // 当前选中的基础标签文本，'' 表示未选
-      let urgentInserted   = false; // 加急是否已插入
 
       // 选择/取消 挡路 or 临停（二选一，互斥）
       function selectBase(text) {
@@ -497,38 +508,11 @@ function renderMainPage(origin) {
         updateTagActive();
       }
 
-      // 插入 / 取消 加急（toggle，始终追加到末尾，红色加粗）
-      function toggleUrgent() {
-        const el = document.getElementById('msgInput');
-        const existing = el.querySelector('span[data-urgent]');
-
-        if (existing) {
-          // 已存在：移除
-          existing.remove();
-          urgentInserted = false;
-        } else {
-          // 不存在：追加到末尾
-          const currentText = el.innerText.trim();
-          const u = document.createElement('span');
-          u.dataset.urgent    = '1';                              // 标记用于后续查找
-          u.style.color       = '#e53e3e';
-          u.style.fontWeight  = '700';
-          u.textContent = (currentText && !currentText.endsWith('，') ? '，' : '') + '麻烦尽快';
-          el.appendChild(u);
-          moveCursorToEnd(el);
-          urgentInserted = true;
-        }
-        updateTagActive();
-      }
-
       function insertAtCursor(el, text) {
         el.focus();
         const sel = window.getSelection();
-        const urgentEl = el.querySelector('span[data-urgent]');
 
-  // 光标存在 且 不在加急 span 内部时，才在光标处插入
-        if (sel && sel.rangeCount > 0 && el.contains(sel.anchorNode)
-            && !(urgentEl && urgentEl.contains(sel.anchorNode))) {
+        if (sel && sel.rangeCount > 0 && el.contains(sel.anchorNode)) {
           const range = sel.getRangeAt(0);
           range.deleteContents();
           const node = document.createTextNode(text);
@@ -538,17 +522,15 @@ function renderMainPage(origin) {
           sel.removeAllRanges();
           sel.addRange(range);
         } else {
-          // 光标在加急 span 内或不存在时，统一插到加急 span 之前
-          el.insertBefore(document.createTextNode(text), urgentEl || null);
+          el.appendChild(document.createTextNode(text));
         }
       }
 
-      // 从编辑框中移除指定的基础文本（跳过加急 span 内部的文本节点）
+      // 从编辑框中移除指定的基础文本
       function removeBaseText(el, text) {
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
           const n = walker.currentNode;
-          if (n.parentNode && n.parentNode.dataset && n.parentNode.dataset.urgent) continue;
           if (n.textContent.includes(text)) {
             n.textContent = n.textContent.replace(text, '');
             break;
@@ -561,7 +543,6 @@ function renderMainPage(origin) {
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
         while (walker.nextNode()) {
           const n = walker.currentNode;
-          if (n.parentNode && n.parentNode.dataset && n.parentNode.dataset.urgent) continue;
           if (n.textContent.includes(oldText)) {
             n.textContent = n.textContent.replace(oldText, newText);
             return;
@@ -571,22 +552,19 @@ function renderMainPage(origin) {
         insertAtCursor(el, newText);
       }
 
-      // 同步三个标签的选中高亮状态
+      // 同步两个标签的选中高亮状态
       function updateTagActive() {
         document.getElementById('tag-block').classList.toggle('active', selectedBaseText === '您的车挡住我了');
         document.getElementById('tag-temp').classList.toggle('active',  selectedBaseText === '临时停靠一下');
-        document.getElementById('tag-urgent').classList.toggle('active', urgentInserted);
       }
 
-      // 将光标移至编辑框末尾
-      function moveCursorToEnd(el) {
-        el.focus();
-        const range = document.createRange();
-        range.selectNodeContents(el);
-        range.collapse(false); // false = 折叠到末尾
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
+      function denyLocation() {
+        const icon = document.getElementById('locIcon');
+        const txt  = document.getElementById('locStatus');
+        icon.className = 'loc-icon error';
+        txt.className  = 'loc-status error';
+        txt.innerText  = '位置获取失败，刷新页面重试或复制链接到浏览器打开';
+        checkPendingSession();
       }
 
       // ── 发送通知 ────────────────────────────────────────────────────────────
@@ -607,6 +585,11 @@ function renderMainPage(origin) {
           });
 
           if (res.ok) {
+            // 记录本次通知，供下次回访时显示 banner
+            localStorage.setItem('pendingSession', JSON.stringify({
+              sentAt: Date.now(),
+              location: userLocation
+            }));
             showToast(delayed ? '⏳ 通知将延迟 5 分钟发送' : '✅ 发送成功！');
             document.getElementById('mainView').style.display    = 'none';
             document.getElementById('successView').style.display = 'flex';
@@ -632,6 +615,7 @@ function renderMainPage(origin) {
             const res  = await fetch('/api/check-status');
             const data = await res.json();
             if (data.status === 'confirmed') {
+              document.getElementById('waitingText').style.display = 'none';
               const fb = document.getElementById('ownerFeedback');
               fb.classList.remove('hidden');
               if (data.ownerLocation && data.ownerLocation.amapUrl) {
@@ -672,6 +656,47 @@ function renderMainPage(origin) {
 
         btn.disabled  = false;
         btn.innerHTML = '<span>🔔</span><span>再次通知</span>';
+      }
+
+      // ── 历史通知 banner ──────────────────────────────────────────────────────
+
+      function checkPendingSession() {
+        let session;
+        try { session = JSON.parse(localStorage.getItem('pendingSession')); } catch(e) {}
+        if (!session) return;
+
+        const elapsed = Date.now() - session.sentAt;
+        const TWENTY_MIN = 20 * 60 * 1000;
+        let shouldShow = false;
+
+        if (userLocation && session.location) {
+          // 有位置：判断距离是否在 50 米内
+          shouldShow = calcDistance(userLocation, session.location) <= 50;
+        } else {
+          // 无位置：判断 20 分钟内
+          shouldShow = elapsed <= TWENTY_MIN;
+        }
+
+        if (shouldShow) {
+          document.getElementById('pendingBanner').classList.add('show');
+        }
+      }
+
+      function showPendingSession() {
+        document.getElementById('mainView').style.display    = 'none';
+        document.getElementById('successView').style.display = 'flex';
+        startPolling();
+      }
+
+      // Haversine 公式，返回两坐标间距离（米）
+      function calcDistance(a, b) {
+        const R = 6371000;
+        const dLat = (b.lat - a.lat) * Math.PI / 180;
+        const dLng = (b.lng - a.lng) * Math.PI / 180;
+        const x = Math.sin(dLat/2) * Math.sin(dLat/2)
+                + Math.cos(a.lat * Math.PI/180) * Math.cos(b.lat * Math.PI/180)
+                * Math.sin(dLng/2) * Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
       }
 
       // ── 工具函数 ────────────────────────────────────────────────────────────
